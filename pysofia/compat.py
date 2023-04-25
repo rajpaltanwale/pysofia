@@ -94,6 +94,7 @@ class RankSVMCV(base.BaseEstimator):
             if not len(query_id) == len(y):
                 raise ValueError('query_id of wrong shape')
         for a in self.alphas:
+            # replaced -
             # scores = joblib.Parallel(n_jobs=self.n_jobs)(
             #     joblib.delayed(_inner_fit)
             #     (X, y, query_id, train, test, a) for train, test in cv)
