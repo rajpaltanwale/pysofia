@@ -4,8 +4,14 @@ from __future__ import print_function
 
 import numpy as np
 from scipy import stats
-from sklearn import base, cross_validation
-from sklearn.externals import joblib
+
+# replaced - from sklearn import base, cross_validation
+from sklearn import base
+from sklearn import model_selection
+
+# replaced - from sklearn.externals import joblib
+import joblib
+
 from .sofia_ml import svm_train, learner_type, loop_type, eta_type
 
 
@@ -80,16 +86,20 @@ class RankSVMCV(base.BaseEstimator):
         if hasattr(self.cv, '__iter__'):
             cv = self.cv
         else:
-            cv = cross_validation.ShuffleSplit(len(y), n_iter=self.cv)
+            # replaced - cv = cross_validation.ShuffleSplit(len(y), n_iter=self.cv)
+            cv = model_selection.ShuffleSplit(n_splits=self.cv)
         mean_scores = []
         if query_id is not None:
             query_id = np.array(query_id)
             if not len(query_id) == len(y):
                 raise ValueError('query_id of wrong shape')
         for a in self.alphas:
+            # scores = joblib.Parallel(n_jobs=self.n_jobs)(
+            #     joblib.delayed(_inner_fit)
+            #     (X, y, query_id, train, test, a) for train, test in cv)
             scores = joblib.Parallel(n_jobs=self.n_jobs)(
                 joblib.delayed(_inner_fit)
-                (X, y, query_id, train, test, a) for train, test in cv)
+                (X, y, query_id, train, test, a) for train, test in cv.split(X, y))
             mean_scores.append(np.mean(scores))
         self.best_alpha_ = self.alphas[np.argmax(mean_scores)]
         self.estimator_ = RankSVM(self.best_alpha_)
